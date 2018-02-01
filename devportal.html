@@ -115,7 +115,7 @@ function showPage() {
 					$("#button").show();
                     var $form = $(this);
 
-					//$("#loading").show();
+					
 					$("#button").show();
 
                     
@@ -130,7 +130,7 @@ function showPage() {
 
 <script>
 
-//switch to live URL - using valid AMEX test card -- Must be voided after completed
+//switch to live URL - using valid/real card -- Should be voided after completed **NOTE - card_number is not actually populated with real CC#, you must replace it with a valid card
 	
 function liveCard() {
 	var serviceURL = document.getElementById("serviceURL").value;
@@ -141,16 +141,16 @@ function liveCard() {
 	{
 	
 		document.getElementById("type").value = "American Express";
-		document.getElementById("card_number").value = "373953190371004";
+		document.getElementById("card_number").value = "340000000000009";
 		document.getElementById("amount").value = "$1.00";
 		
-		alert("When 'live' is selected the AMEX test card pre-populates.  You must void the transaction afterwards!");
+		alert("When 'live' is selected a valid card number pre-populates.  You should void the transaction afterwards!");
 			
 	}
 	
 }
 
-//sets default Visa card when switching between URLs/methods
+//sets default Visa test card when switching between URLs/methods
 function ccDefault() {
 
 	if (serviceURL.value == "https://api-cert.payeezy.com/v1/transactions/") {
@@ -187,7 +187,7 @@ function ccDefault() {
 
 
 
-//new POST token method - will replace Payeezy.JS GET method in March 2018
+//new POST token method - will replace HTTP GET method at the end of March 2018
 
 function postToken() {
 	var postTokenMethod = document.getElementById("method").value;
@@ -208,7 +208,7 @@ function postToken() {
 	function SetTypeText(number)
 	{
 
-//basic regex to set credit card type in .JS sample	
+//basic regex to set credit card type in .JS test sample BIN 2 Mastercard is not checked with this Regex	
 var typeField = document.getElementById("card_type");
 		
 		typeField.value = GetCardType(number);
@@ -268,7 +268,7 @@ var typeField = document.getElementById("type");
 
         }		
 
-// Calculate level 3 totals - pass to total amount to charge 
+// Calculate level 3 totals - pass to total amount to charge -- Tax rate calculation and other parameters not included yet
 
 
 $(document).ready(function(){
@@ -292,7 +292,7 @@ $(document).ready(function(){
 
 	
 	
-	//adds comma, decimal, dollar sign in total amount field from level 3 calculation  
+	//adds comma, decimal, dollar sign in total amount field from level 3 calculation (PHP script removes invalid characters from amount since it needs to be submitted in pennies i.e. 1299 = $12.99 
 	document.getElementById("amount").value = ( '$' + ( dollars/100 ).toFixed( 2 ).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,") );	
 	
 
@@ -301,7 +301,7 @@ $(document).ready(function(){
    });
 });
 
-//display Level 2 and Level 3 fields and Telecheck
+//display Level 2 and Level 3 fields and Telecheck -sets method accordingly
 function showLevel2Form() {
     if (document.getElementById('level2').checked) {
         document.getElementById('level2Checked').style.display = 'block';
@@ -381,6 +381,7 @@ label {
 
 <div class="JSform" id="JSForm">
 
+	<!-- Payeezy.JS form, uses Acme Socks sandbox credentials by default, contains minimal form validation -->
 
 	<form method="post" class="JSForm" name="payment-info-form" id="payment-info-form">
 		<h4 style="color: red">
@@ -588,23 +589,26 @@ label {
 <div class="credentials" style="text-align:left;">
 <h2 align="center">Credentials</h2>
 
-	<form action="level3dev.php" method="post" id="processTransaction" name="processTransaction">
+	
+	<!--Credit card detail test form - to see transactions in Sandbox you must have a demo account - refer to the readme.md -->
+
+<form action="level3dev.php" method="post" id="processTransaction" name="processTransaction">
 		
 			
 			
 					
 					<label>apiKey</label>
-					<input name="apiKey" id="apiKey" style="width:225px;" value="XURWnzNswfGg0Fm3lA31AxXmDLYTqDiV" required placeholder="apiKey" pattern=".{32}" title="must be 32 characters"/>
+					<input name="apiKey" id="apiKey" style="width:225px;" value="y6pWAJNyJyjGv66IsVuWnklkKUPFbb0a" required placeholder="apiKey" pattern=".{32}" title="must be 32 characters"/>
 					
 					
 					 					
 					<label>apiSecret</label>
-					<input name="apiSecret" id="apiSecret" style="width:225px;" value="043a19d462b907952635c278be3a27ebc4987e24752ed3638bbfe9bdf58a9b16" required placeholder="apiSecret" pattern=".{64}" title="must be 64 characters"/>
+					<input name="apiSecret" id="apiSecret" style="width:225px;" value="86fbae7030253af3cd15faef2a1f4b67353e41fb6799f576b5093ae52901e6f7" required placeholder="apiSecret" pattern=".{64}" title="must be 64 characters"/>
 					
 					
 										
 					<label>Merchant Token</label>
-					<input name="token" id="token" style="width:225px;" value="fdoa-e057c2dcf4a485ad169d4694e5d9f213e057c2dcf4a485ad" required placeholder="merchant token" pattern=".{53}" title="must be 53 characters and start with 'fdoa' "/>
+					<input name="token" id="token" style="width:225px;" value="fdoa-a480ce8951daa73262734cf102641994c1e55e7cdf4c02b6" required placeholder="merchant token" pattern=".{53}" title="must be 53 characters and start with 'fdoa' "/>
 					
 					
 					<label>Service URL</label>
@@ -652,12 +656,7 @@ label {
 					<label>TA Token (POST token request)</label>
 					<input name="ta_token" id="ta_token" value="NOIW" maxlength="4"/>
 					
-					
-
-					
-
-					
-									
+						
 					<label>Credit Card Type</label>
 					<select name="type" id="type" style="width:125px;">
 					<option value="visa">Visa</option>
