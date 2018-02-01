@@ -1,0 +1,872 @@
+<title>Payeezy Developer API tests</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge;" />
+<h1>Payeezy Developer and .JS tests</h1>
+<!-- Payeezy JS and jquery reference Java-script files   -->
+<script src="jquery-1.11.3.min.js" type="text/javascript"></script>
+<script src="payeezy_us_v5.1.js" type="text/javascript"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/jquery-3.2.1.min.js"></script>
+<script>
+function showPage() {
+  document.getElementById("loadingGif").style.display = "none";
+
+}
+</script>
+<style>
+.loadingGif
+{
+    left : 50%;
+    top : 50%;
+    position : fixed;
+	text-align: center;
+	}
+</style>
+<body>
+<div id="loadingGif"></div><div class="loadingGif"> <img src="loading.gif" id="loading" align="center" style="display: none;">
+<img src="loading.gif" id="button" style="display: none;"></div>
+</body>
+<script>
+
+    <!-- handling response from Payeezy server -->
+    var responseHandler = function(status, response) {
+        var $form = $('#payment-info-form');
+        $('#someHiddenDiv').hide();
+        if (status != 201) {
+             if (response.error && status != 400) {
+               var error = response["error"];
+               var errormsg = error["messages"];
+               var errorcode = JSON.stringify(errormsg[0].code, null, 4);
+               var errorMessages = JSON.stringify(errormsg[0].description, null, 4); 
+               $('#payment-errors').html( 'Error Code:' + errorcode + ', Error Messages:'
+                                + errorMessages);
+            }
+            if (status == 400 || status == 401 || status == 500) {
+               $('#payment-errors').html('');
+               var errormsg = response.Error.messages;
+               var errorMessages = "";
+               for(var i in errormsg){
+                var ecode = errormsg[i].code;
+                var eMessage = errormsg[i].description;
+                errorMessages = errorMessages + 'Error Code:' + ecode + ', Error Messages:'
+                                + eMessage;
+                }
+           
+               $('#payment-errors').html( errorMessages);
+            }
+
+            $form.find('button').prop('disabled', false);
+        }
+		
+		else {
+            $('#payment-errors').html('');
+            var result = response.token.value;
+			var cctype = response.token.type;
+			document.getElementById("card_number").value = result;
+			document.getElementById("type").value = cctype;
+			var meth = document.getElementById("method").value = 'token';
+            $('#response_msg').html('Payeezy response - Token value:' + result);
+            $('#response_note')
+                    .html(
+                            " Note: Use this token for authorize and/or purchase transactions. For more details, visit https://developer.payeezy.com/payeezy-api/apis/post/transactions-4");
+            $form.find('button').prop('disabled', false);
+        }
+
+    };
+	
+		
+    <!-- Building JSON resquest and submitting request to Payeezy sever -->
+    jQuery(function($) {
+        $('#payment-info-form').submit(function(e) {
+                    
+					$("#button").show();
+					
+                    $('#response_msg').html('');
+                    $('#response_note').html('');
+                    $('#payment-errors').html('');
+
+                    var $form = $(this);
+                    $form.find('button').prop('disabled', true);
+					var URL = document.getElementById("URL").value;
+                    var apiKey = document.getElementById("apikey").value;
+                    var js_security_key = document.getElementById("js_security_key").value;
+                    var auth = document.getElementById("auth").value;
+					var ta_token = document.getElementById("ta_token").value;
+
+                    <!-- Setting Key parameters for Payeezy gettoken method --> 
+                    Payeezy.setURL(URL);
+					Payeezy.setApiKey(apiKey);
+                    Payeezy.setJs_Security_Key(js_security_key);
+                    Payeezy.setTa_token(ta_token);
+                    Payeezy.setAuth(auth);
+					Payeezy.setcurrency(currency);
+                    Payeezy.createToken(responseHandler);
+					$("#loading").delay(300).fadeOut(400);
+					$("#button").delay(300).fadeOut(400);
+
+                    
+                    return false;
+					
+                });
+    });
+
+	//display loading gif when 'process transaction' clicked -- assumes you have a .gif file named 'loading.gif'
+    jQuery(function($) {
+        $('#processTransaction').submit(function() {
+                    
+					$("#button").show();
+                    var $form = $(this);
+
+					//$("#loading").show();
+					$("#button").show();
+
+                    
+                    
+					
+                });
+    });	
+
+
+	
+</script>
+
+<script>
+
+//switch to live URL - using valid AMEX test card -- Must be voided after completed
+	
+function liveCard() {
+	var serviceURL = document.getElementById("serviceURL").value;
+	
+	
+
+	if (serviceURL.value == "https://api.payeezy.com/v1/transactions/");
+	{
+	
+		document.getElementById("type").value = "American Express";
+		document.getElementById("card_number").value = "373953190371004";
+		document.getElementById("amount").value = "$1.00";
+		
+		alert("When 'live' is selected the AMEX test card pre-populates.  You must void the transaction afterwards!");
+			
+	}
+	
+}
+
+//sets default Visa card when switching between URLs/methods
+function ccDefault() {
+
+	if (serviceURL.value == "https://api-cert.payeezy.com/v1/transactions/") {
+		document.getElementById("type").value = "visa";
+		document.getElementById("card_number").value = "4111111111111111";
+		document.getElementById("amount").value = "$143.00";
+		document.getElementById("method").value = "credit_card";
+
+		}
+		
+	if (serviceURL.value == "https://api-cert.payeezy.com/v1/transactions/tokens")  {
+
+		document.getElementById("method").value = "post_token";
+		document.getElementById("type").value = "visa";
+		document.getElementById("card_number").value = "4111111111111111";
+		document.getElementById("amount").value = "$143.00";
+
+		
+		}
+		
+	if (serviceURL.value == "https://api.payeezy.com/v1/transactions/tokens")  {
+
+		document.getElementById("method").value = "live_post_token";
+		document.getElementById("type").value = "visa";
+		document.getElementById("card_number").value = "4111111111111111";
+		document.getElementById("amount").value = "$143.00";
+
+		
+		}
+		
+	
+	}
+
+
+
+
+//new POST token method - will replace Payeezy.JS GET method in March 2018
+
+function postToken() {
+	var postTokenMethod = document.getElementById("method").value;
+
+		if (postTokenMethod == 'post_token') {
+			var tokenURL = document.getElementById("serviceURL").value = "https://api-cert.payeezy.com/v1/transactions/tokens";
+			
+		}
+		
+		if (postTokenMethod == 'live_post_token') {
+			var tokenURL = document.getElementById("serviceURL").value = "https://api.payeezy.com/v1/transactions/tokens";
+			
+		}
+		
+	}
+
+
+	function SetTypeText(number)
+	{
+
+//basic regex to set credit card type in .JS sample	
+var typeField = document.getElementById("card_type");
+		
+		typeField.value = GetCardType(number);
+	}
+ 
+        function GetCardType(number)
+        {            
+            var re = new RegExp("^4");
+            if (number.match(re) != null)
+                return "visa";
+ 
+            re = new RegExp("^(34|37)");
+            if (number.match(re) != null)
+                return "American Express";
+ 
+            re = new RegExp("^5[1-5]");
+            if (number.match(re) != null)
+                return "mastercard";
+ 
+            re = new RegExp("^6011");
+            if (number.match(re) != null)
+                return "discover";
+ 
+            return "";
+			
+
+        }
+
+	function SetccTypeText(number)
+	{
+//basic regex to set credit card type in card info form		
+var typeField = document.getElementById("type");
+		
+		typeField.value = GetCardType(number);
+	}
+ 
+        function GetCardType(number)
+        {            
+            var re = new RegExp("^4");
+            if (number.match(re) != null)
+                return "visa";
+ 
+            re = new RegExp("^(34|37)");
+            if (number.match(re) != null)
+                return "American Express";
+ 
+            re = new RegExp("^5[1-5]");
+            if (number.match(re) != null)
+                return "mastercard";
+ 
+            re = new RegExp("^6011");
+            if (number.match(re) != null)
+                return "discover";
+ 
+            return "";
+			
+
+        }		
+
+// Calculate level 3 totals - pass to total amount to charge 
+
+
+$(document).ready(function(){
+    $(".input").keyup(function(){
+          var qty = +$(".qty").val();
+          var cost = +$(".cost").val();
+		  //var tax = +$(".tax").val();
+		  var discAmt = +$(".discAmt").val();
+		  var frtAmt = +$(".freight_amount").val();
+		  var duty = +$(".duty").val();
+		  //var taxRate = +$(".taxRate").val().toFixed(1) /100 + 1; //-- Tax Rate calculation  in BETA
+			
+		// Adds total to line item and amount to process
+          $("#line_item_total").val(qty*cost+frtAmt+duty-discAmt) / 100;
+		  $("#amount").val(qty*cost+frtAmt+duty-discAmt) / 100;
+		  $("#totalamt").val(qty*cost+frtAmt+duty-discAmt) / 100;
+		  
+	//var taxTotal = +$("#taxRate").val() * $("#line_item_total").val();
+	//var taxAmt = document.getElementById("tax_amount").value = taxTotal;
+	var dollars = document.getElementById("amount").value;
+
+	
+	
+	//adds comma, decimal, dollar sign in total amount field from level 3 calculation  
+	document.getElementById("amount").value = ( '$' + ( dollars/100 ).toFixed( 2 ).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,") );	
+	
+
+
+	
+   });
+});
+
+//display Level 2 and Level 3 fields and Telecheck
+function showLevel2Form() {
+    if (document.getElementById('level2').checked) {
+        document.getElementById('level2Checked').style.display = 'block';
+    }
+    else document.getElementById('level2Checked').style.display = 'none';
+
+}
+
+function showLevel3Form() {
+    if (document.getElementById('level3').checked) {
+        document.getElementById('level3Checked').style.display = 'block';
+    }
+    else document.getElementById('level3Checked').style.display = 'none';
+
+}
+
+function showTelecheck() {
+    if (document.getElementById('telecheck').checked) {
+        document.getElementById('telecheckChecked').style.display = 'block';
+		document.getElementById('method').value = 'tele_check';
+		document.getElementById('amount').value = '$1.00';
+    }
+    else document.getElementById('telecheckChecked').style.display = 'none';
+
+}
+
+//converts amount field to actual USD currency w/ commas, decimal and dollar sign
+function convertUSD() {
+	var amtUSD = document.getElementById("amount").value;
+	document.getElementById("amount").value = ( '$' + ( amtUSD/100 ).toFixed( 2 ).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,") );	
+	
+	
+		}
+		
+</script>
+</head>
+
+<style>
+<link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/themes/redmond/jquery-ui.css">
+
+.JSform {
+   float: left;
+   margin-left: 5%;
+   width: 320px;
+   height: 600px;
+
+
+}
+
+form {
+    width: 80%;
+    margin: 0 auto;
+}
+
+input {
+    display: inline-block;
+	text-align: left;
+	align: left;
+}
+
+select {
+    display: inline-block;
+	width: 155px;
+}
+
+label {
+  display: inline-block;
+  width: 155px;
+  text-align: left;
+}
+
+
+
+</style>
+
+<body>
+
+<div class="JSform" id="JSForm">
+
+
+	<form method="post" class="JSForm" name="payment-info-form" id="payment-info-form">
+		<h4 style="color: red">
+			<span id="payment-errors"></span>
+		</h4>
+		<h4 style="color: green">
+			<span id="response_msg"></span>
+		</h4>
+		<h4 style="color: blue">
+			<span id="response_note"></span>
+		</h4>
+			
+				<label>API Key</label>
+				<input type="text" name="apikey" id="apikey"
+					value="y6pWAJNyJyjGv66IsVuWnklkKUPFbb0a" required placeholder="apiKey" pattern=".{32}" title="must be 32 characters" />
+				<br>
+				<label>JS Security Key :</label>
+				<input type="text" name="js_security_key"
+					id="js_security_key" required pattern=".{51}" title="must be 51 characters and start with 'js' "
+					value="js-6125e57ce5c46e10087a545b9e9d7354c23e1a1670d9e9c7" placeholder="js_security_key"/><br>
+			
+				<label>Auth :</label>
+				<select name="auth" id="auth" payeezy-data="auth">
+						<option value="true">true</option>
+						<option value="false">false</option>
+				</select><br>
+			
+			
+				<label>TA Token :</label>
+				<input type="text" name="ta_token" id="ta_token"
+					payeezy-data="ta_token" value="NOIW" />
+					<br>
+			
+				<label>Currency :</label>
+				<input type="text" name="currency" id="currency"
+					payeezy-data="currency" value="USD" />
+				<br>
+			
+				<label>Card Type :</label>
+				<select payeezy-data="card_type" id="card_type">
+						<option value="visa">Visa</option>
+						<option value="mastercard">Master Card</option>
+						<option value="American Express">American Express</option>
+						<option value="discover">Discover</option>
+				</select>
+				<br>
+			
+				<label>Cardholder Name :</label>
+				<input type="text" payeezy-data="cardholder_name"
+					value="xyz" />
+				<br>
+			
+				<label>Card Number :</label>
+				<input type="text" payeezy-data="cc_number" id="cc_number" onchange="SetTypeText(this.value)"
+					value="4788250000028291" maxlength="16" />
+				<br>
+			
+				<label>CVV Code :</label>
+				<input type="text" payeezy-data="cvv_code" value="123" />
+				<br>
+			
+			
+				<label>Expiry Date :</label>
+				<select payeezy-data="exp_month">
+						<option value="01">01</option>
+						<option value="02">02</option>
+						<option value="03">03</option>
+						<option value="04">04</option>
+						<option value="05">05</option>
+						<option value="06">06</option>
+						<option value="07">07</option>
+						<option value="08">08</option>
+						<option value="09">09</option>
+						<option value="10">10</option>
+						<option value="11">11</option>
+						<option value="12" selected>12</option>
+				</select> <select payeezy-data="exp_year">
+						<option value="17">2017</option>
+						<option value="18" selected>2018</option>
+						<option value="19">2019</option>
+						<option value="20">2020</option>
+						<option value="21">2021</option>
+						<option value="22">2022</option>
+						<option value="23">2023</option>						
+				</select>
+				<br>
+			
+			<label>URL</label> 
+			<select payeezy-data="URL" id="URL" class="URL" name="URL">
+                                <option value="api-cert.payeezy.com">Sandbox</option>
+                                <option value="api.payeezy.com">Live</option>
+
+			</select>
+			<br>	
+					<button type="submit" id="button">Generate token</button>
+				
+
+		</div>
+
+	</form>
+</body>
+
+</html>
+
+<HTML>
+<head>
+<style>
+
+
+.credentials {
+   float: left;
+   margin: 5px;
+   padding: 5px;
+   width: 500px;
+   height: auto;
+   border: 1px solid black;
+}   
+
+.forminfo {
+   float: left;
+   margin: 5px;
+   padding: 10px;
+   width: 1280px;
+   height: 450px;
+   border: 1px solid black;
+   
+
+}
+
+.level2 {
+    border: 1px solid black;
+	position: relative;
+	height: 165px;
+	bottom: 0;
+	width: 100%;
+	float: left;
+}
+.level3 {
+    border: 1px solid black;
+	position: relative;
+	height: 225px;
+	bottom: 0;
+	width: 100%;
+	float: left;
+}
+
+<!-- .telecheck {
+    border: 1px solid black;
+	position: relative;
+	height: 205px;
+	bottom: 0;
+	width: 100%;
+	float: left;
+	
+} -->
+
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.telecheck {  
+  /* This section calls the slideInFromLeft animation we defined above */
+  animation: 1s ease-out 0s 1 slideInFromLeft;
+  
+  background: #fff;
+  padding: 30px;
+}
+
+/* Added for aesthetics */ body {margin: 0;font-family: "Segoe UI", Arial, Helvetica, Sans Serif;} a {text-decoration: none; display: inline-block; margin-right: 10px; color:#000;}
+
+.level2 {  
+  /* This section calls the slideInFromLeft animation we defined above */
+  animation: 1s ease-out 0s 1 slideInFromLeft;
+  
+  background: #fff;
+  padding: 30px;
+}
+
+/* Added for aesthetics */ body {margin: 0;font-family: "Segoe UI", Arial, Helvetica, Sans Serif;} a {text-decoration: none; display: inline-block; margin-right: 10px; color:#000;}
+
+
+.level3 {  
+  /* This section calls the slideInFromLeft animation we defined above */
+  animation: 1s ease-out 0s 1 slideInFromLeft;
+  
+  background: #fff;
+  padding: 30px;
+}
+
+/* Added for aesthetics */ body {margin: 0;font-family: "Segoe UI", Arial, Helvetica, Sans Serif;} a {text-decoration: none; display: inline-block; margin-right: 10px; color:#000;}
+
+
+
+
+</style>
+</head>
+<body>
+<img src="loading.gif" id="loading" style="display: none;">
+<img src="loading.gif" id="button" style="display: none;">
+<div class="credentials" style="text-align:left;">
+<h2 align="center">Credentials</h2>
+
+	<form action="level3dev.php" method="post" id="processTransaction" name="processTransaction">
+		
+			
+			
+					
+					<label>apiKey</label>
+					<input name="apiKey" id="apiKey" style="width:225px;" value="XURWnzNswfGg0Fm3lA31AxXmDLYTqDiV" required placeholder="apiKey" pattern=".{32}" title="must be 32 characters"/>
+					
+					
+					 					
+					<label>apiSecret</label>
+					<input name="apiSecret" id="apiSecret" style="width:225px;" value="043a19d462b907952635c278be3a27ebc4987e24752ed3638bbfe9bdf58a9b16" required placeholder="apiSecret" pattern=".{64}" title="must be 64 characters"/>
+					
+					
+										
+					<label>Merchant Token</label>
+					<input name="token" id="token" style="width:225px;" value="fdoa-e057c2dcf4a485ad169d4694e5d9f213e057c2dcf4a485ad" required placeholder="merchant token" pattern=".{53}" title="must be 53 characters and start with 'fdoa' "/>
+					
+					
+					<label>Service URL</label>
+					<select name="serviceURL" id="serviceURL" width="300" onchange="ccDefault()" />
+					<option value="https://api-cert.payeezy.com/v1/transactions/">Sandbox</option>
+					<option value="https://api.payeezy.com/v1/transactions/" onclick="liveCard()">Live</option>	
+					<option value="https://api-cert.payeezy.com/v1/transactions/tokens" onclick="postTokenURL">post_token (sandbox)</option>
+					<option value="https://api.payeezy.com/v1/transactions/tokens" onclick="postTokenURL">post_token (LIVE)</option>
+					</select>
+					
+</div>			
+
+<div class="forminfo">
+<h1>Card & Token Information</h1>		
+
+<p>
+<input type="checkbox" onclick="showTelecheck();" id="telecheck"><label>Display Telecheck</label>
+<input type="checkbox" onclick="showLevel2Form();" id="level2"><label>Display Level 2</label>
+<input type="checkbox" onclick="showLevel3Form();" id="level3"><label>Display Level 3</label>
+<p>			
+					<label>Transaction Type</label>
+					<select name="transaction_type" id="transaction_type" style="width:125px;">
+					<option value="purchase">Purchase</option>
+					<option value="refund">Refund</option>
+					<option value="void">Void</option>
+					<option value="authorize">Authorize</option>
+					<option value="capture">Capture</option>
+					</select><br>
+					
+					<label>Method</label>
+					<select name="method" id="method" style="width:125px;" onchange="postToken()">
+					<option value="credit_card">Credit Card</option>
+					<option value="token">Token</option>
+					<option value="tele_check">Telecheck</option>
+					<option value="post_token" id="post_token">cert-POST for Transarmor Token</option>
+					<option value="live_post_token" id="live_post_token">LIVE-POST for Transarmor Token</option><br><br>
+					</select>
+					<label>Amount</label>
+					<input name="amount" id="amount" pattern =".{1,11}" title="Maximum amount is $999,999.99" maxlength="11" style="width:125px;" value="$143.00" type="text" onchange="convertUSD()" required />	
+					
+					<label>Currency</label>
+					<input name="currency_code" id="currency_code" style="width:125px;" value="USD" maxlength="3"/>
+					
+					
+					<label>TA Token (POST token request)</label>
+					<input name="ta_token" id="ta_token" value="NOIW" maxlength="4"/>
+					
+					
+
+					
+
+					
+									
+					<label>Credit Card Type</label>
+					<select name="type" id="type" style="width:125px;">
+					<option value="visa">Visa</option>
+					<option value="mastercard">Mastercard</option>
+					<option value="American Express">American Express</option>
+					<option value="discover">Discover</option>
+					</select>
+					<br>
+					<label>Transarmor Token or Credit Card Number</label>
+					<input name="card_number" id="card_number" style="width:125px;" value="4111111111111111" maxlength="16" onchange="SetccTypeText(this.value)"/>
+					
+					<label>CVV</label>
+					<input name="card_cvv" id="card_cvv" style="width:125px;" value="123" maxlength="4"/>
+					
+
+					<label>Card Expiry</label>
+					<input name="card_expiry" id="card_expiry" style="width:125px;" value="1030" maxlength="4"/>
+					<br>
+					<label>Credit Card Holder Name</label>
+					<input name="card_holder_name" id="card_holder_name" style="width:125px;" value="FD Test"/>
+				
+																	
+					<label>merchant_ref</label>
+					<input name="merchant_ref" id="merchant_ref" style="width:125px;" value=""/>
+					<br>
+					 
+					<label>transaction_id (Auth#)</label>
+					<input name="transaction_id" id="transaction_id" style="width:125px;" value=""/>
+					<br>
+					<label>transaction_tag</label>
+					<input name="transaction_tag" id="transaction_tag" style="width:125px;" value=""/>
+	
+
+					<label>Street Address</label>
+					<input name="street" id="street" style="width:125px;" value="yes street"/>
+					
+					<label>city</label>
+					<input name="city" id="city" style="width:125px;" value="Yes city"/>
+					
+					
+					<label>state_province</label>
+					<input name="state_province" id="state_province" style="width:125px;" value="MD"/>
+					
+					<label>zip_postal_code</label>
+					<input name="zip_postal_code" id="zip_postal_code" style="width:125px;" value="12345"/>
+					
+					<label>country</label>
+					<input name="country" id="country" style="width:125px;" value="US"/>
+					<label>email</label>
+					<input name="email" id="email" style="width:125px;" value="no@no.com"/>
+					
+					<br>
+					<label>phone_type</label>
+					<input name="phonetype" id="phonetype" style="width:125px;" value="H"/>
+					
+					<label>phonenumber</label>
+					<input name="phonenumber" id="phonenumber" style="width:125px;" value="3011234567"/>
+					
+
+</div>
+
+<div id="level2Checked" style="display:none" class="level2">
+<h3>Level 2 Info</h3>
+					customer_ref</label>
+					<input name="customer_ref" id="customer_ref" style="width:125px;" value="customer_ref_info"/>
+					
+					tax1_amount</label>
+					<input name="tax1_amount" id="tax1_amount" style="width:125px;" value="100"/>
+
+					tax1_number</label>
+					<input name="tax1_number" id="tax1_number" style="width:125px;" value="123456789"/>
+					
+					tax2_amount</label>
+					<input name="tax2_amount" id="tax2_amount" style="width:125px;" value="100"/>
+					
+					tax2_number</label>
+					<input name="tax2_number" id="tax2_number" style="width:125px;" value="987654321"/>
+</div>
+
+<div id="level3Checked" style="display:none" class="level3">
+<h3>Level 3 Info</h3>
+					<label>alt_tax_amount</label><input name="alt_tax_amount" id="alt_tax_amount" value="100">
+					<label>alt_tax_id</label><input name="alt_tax_id" id="alt_tax_id" value="123456789">
+					<label>duty_amount</label><input name="duty_amount" id="duty_amount" class="input duty" value="100">
+					<label>freight_amount</label><input name="freight_amount" class="input freight_amount" id="freight_amount" value="100">
+					<label>address_1</label><input name="address_1" id="address_1" value="level3_address1">
+					<label>ship_from_zip</label><input name="ship_from_zip" id="ship_from_zip" value="12345">
+					<label>city</label><input name="city" id="l3city" value="level3city">
+					<label>state</label><input name="state" id="state" value="MD" maxlength="2">
+					<label>zip</label><input name="zip" id="zip" value="12345" max length="9">
+					<label>country</label><input name="country" id="country" value="US" max length="2">
+					<label>name</label><input name="name" id="name" value="level3name">
+					<label>phone</label><input name="phone" id="phone" value="3011234567">
+					<label>customer_number</label><input name="customer_number" id="customer_number" value="level3_cust_number">
+				    <label>description</label><input name="description" id="description" value="level 3 tacos" required>
+				    <label>quantity</label><input name="quantity" class="input qty" id="quantity" value="10">
+				    <label>commodity_code</label><input name="commodity_code" id="commodity_code" value="090909" max length="6" required>
+				    <label>discount_amount</label><input name="discount_amount" id="discount_amount" class="input discAmt" value="1000">
+				    <label>discount_indicator</label><input name="discount_indicator" id="discount_indicator" value="1" max length="1" required>
+				    <label>gross_net_indicator</label><input name="gross_net_indicator" id="gross_net_indicator" value="0" max length="1" required>
+				    <label>product_code</label><input name="product_code" id="product_code" value="UPC_level3" required>
+				    <label>tax_amount</label><input name="tax_amount" id="tax_amount" class="input tax" value="100" required>
+				    <label>tax_rate (%)</label><input name="tax_rate" id="tax_rate" class="input taxRate" value="5" maxlength="2" />
+				    <label>tax_type</label><input name="tax_type" id="tax_type" value="2" max length="2">
+				    <label>unit_cost</label><input name="unit_cost" id="unit_cost" class="input cost" value="1500" required>
+				    <label>unit_of_measure</label><input name="unit_of_measure" id="unit_of_measure" value="EA" max length="3" pattern="[a-z]{A-Z}" required>
+					
+					<input name="line_item_totalamt" class="input line_item_totalamt" type="hidden">				
+					<label>line_item_total</label><input name="line_item_total" id="line_item_total" value="14300" type="text" readonly required>
+					
+					
+									
+</div>
+
+
+						
+				
+			<div class="telecheck" id="telecheckChecked" style="display:none" class="telecheck" /><h1>Telecheck (BETA) *Amount, address, transaction type, etc. inherited from CC form</h1>
+			
+
+					<label><font face="verdana,arial,helvetica" size="2">Check#</label>
+					<input name="check_number" id="check_number" style="width:125px;" value="0101"/>
+					<label>Check Type</label>
+					<select name="check_type" id="check_type" align="left" />
+					<option value="C">Corporate</option>
+					<option value="P">Personal</option>
+					</select>
+					
+					<label>Routing#</label>
+					<input name="routing_number" id="routing_number" style="width:125px;" value="012345678"/>
+					
+					<label>Account Number</label>
+					<input name="account_number" id="account_number" style="width:125px;" value="0951235184824" type="text"/>
+					
+					<label>Account Holder name</label>
+					<input name="accountholder_name" id="accountholder_name" style="width:165px;" value="FD Test"/>
+					
+					<label>Customer ID Type</label>
+					<select name="customer_id_type" id="customer_id_type" width="165">
+					<option value="0">Driver's License</option>
+					<option value="1">Social Security Number</option>
+					<option value="2">Tax ID</option>
+					<option value="3">Military ID</option>
+					</select>
+					
+					<label>Customer ID Number</label>
+					<input name="customer_id_number" id="customer_id_number" style="width:125px;" value="TX12345678" type="text"/>
+					
+					<label>client_email</label>
+					<input name="client_email" id="client_email" style="width:125px;" value="none@none.com"/>
+					
+					</div>
+					<div class="buttonPosition"><button type="submit" id="button" class="button">Process Transaction</button></div>					
+					
+<style>
+.button {
+	-moz-box-shadow: 0px 1px 0px 0px #fff6af;
+	-webkit-box-shadow: 0px 1px 0px 0px #fff6af;
+	box-shadow: 0px 1px 0px 0px #fff6af;
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffec64), color-stop(1, #ffab23));
+	background:-moz-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+	background:-webkit-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+	background:-o-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+	background:-ms-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+	background:linear-gradient(to bottom, #ffec64 5%, #ffab23 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffec64', endColorstr='#ffab23',GradientType=0);
+	background-color:#ffec64;
+	-moz-border-radius:17px;
+	-webkit-border-radius:17px;
+	border-radius:17px;
+	border:2px solid #ffaa22;
+	display:inline-block;
+	cursor:pointer;
+	color:#333333;
+	font-family:Arial;
+	font-size:15px;
+	padding:9px 16px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #ffee66;
+}
+.button:hover {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffab23), color-stop(1, #ffec64));
+	background:-moz-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+	background:-webkit-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+	background:-o-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+	background:-ms-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+	background:linear-gradient(to bottom, #ffab23 5%, #ffec64 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffab23', endColorstr='#ffec64',GradientType=0);
+	background-color:#ffab23;
+}
+.button:active {
+	position:relative;
+	top:1px;
+}
+
+.buttonPosition {
+   float: right;
+   margin: 5px;
+   padding: 10px;
+}   
+
+   
+</style>
+	
+
+					
+	
+					
+				
+				
+				
+				
