@@ -9,7 +9,7 @@ date_default_timezone_set('UTC');
  header("Cache-Control: no-cache, must-revalidate"); //HTTP 1.1
  header("Pragma: no-cache");
 
-//allow for global $_POST to function with xampp / development environment
+//allow for empty global $_POST to function with xampp / development environment
 
 error_reporting(E_ALL ^ E_NOTICE);
 
@@ -35,11 +35,7 @@ $discount_amount = $_POST["discount_amount"];
 
 
 $amount = preg_replace('/[^\p{L}\p{N}\s]/u', '', $amount);
-$duty_amount = preg_replace('/[^\p{L}\p{N}\s]/u', '', $duty_amount);
-$unit_cost = preg_replace('/[^\p{L}\p{N}\s]/u', '', $unit_cost);
-$freight_amount = preg_replace('/[^\p{L}\p{N}\s]/u', '', $freight_amount);
-$line_item_total = preg_replace('/[^\p{L}\p{N}\s]/u', '', $line_item_total);
-$discount_amount = preg_replace('/[^\p{L}\p{N}\s]/u', '', $discount_amount);
+
 
 	$billing_address = array(
 			  'street'=> $_POST['street'],
@@ -331,7 +327,6 @@ curl_setopt($curl, CURLOPT_HEADER, false);
 curl_setopt($curl, CURLOPT_POST, true);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
-//curl_setopt($curl, CURLOPT_PROXY, 'fdcproxy.1dc.com:8080/accelerated_pac_base.pac');
 curl_setopt($curl, CURLOPT_VERBOSE, true);
 curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
@@ -354,10 +349,6 @@ if ( $status != 201 ) {
 }
 
 curl_close($curl);
-
-// echo "Response is: ".$response."\n";
-
-
 
 echo "Transaction Response is: ".$response."\n";
 
